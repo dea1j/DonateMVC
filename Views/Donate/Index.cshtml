@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Donate";
+    var error = ViewData["error"] as string;
     DonateViewModel donate = new DonateViewModel();
 }
 
@@ -7,6 +8,10 @@
     <div class="card" style="width: 24rem;">
         <div class="card-body">
             <h3 class="card-title text-center">Donate</h3>
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <div class="alert alert-danger">@error</div>
+            }
             <form method="post" asp-controller="Donate" asp-action="Index">
                 <div class="form-group">
                     <label for="name">Name</label>

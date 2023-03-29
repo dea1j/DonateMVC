@@ -3,15 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using PaymentIntegration.Models;
+using PaymentIntegration.Repository;
+using PayStack.Net;
 
 namespace PaymentIntegration.Controllers
 {
     public class DonateController : Controller
     {
-        public DonateController()
-        {
+        private readonly IConfiguration _configuration;
+        private readonly AppDbContext _context;
+        private readonly string token;
 
+        private PayStackApi PayStack { get; set; }
+
+        public DonateController(IConfiguration configuration, AppDbContext context)
+        {
+            _configuration = configuration;
+            _context = context;
+            token = _configuration["Payment:PaystackSK"];
+            PayStack = new PayStackApi(token);
         }
 
         [HttpGet]
@@ -21,8 +33,31 @@ namespace PaymentIntegration.Controllers
         }
 
         [HttpPost]
-        public IActionResult Index(DonateViewModel donate)
+        public async Task<IActionResult> Index(DonateViewModel donate)
         {
+            TransactionInitializeRequest request = new()
+            {
+                AmountInKobo = donate.Amount * 100,
+                Email = donate.Email,
+                Reference = GenerateRef().ToString(),
+                Currency = "NGN",
+                CallbackUrl = "http://localhost:48555/donate/verify"
+            };
+
+            TransactionInitializeResponse response = PayStack.Transactions.Initialize(request);
+            if (response.Status)
+            {
+                var transaction = new TransactionModel()
+                {
+                    Amount = donate.Amount,
+                    Email = donate.Email,
+                    TrxRef = request.Reference,
+                    Name = donate.Name
+                };
+                await _context.Transactions.AddAsync(transaction);
+                Redirect(response.Data.AuthorizationUrl);
+            }
+            ViewData["error"] = response.Message;
             return View();
         }
 
@@ -36,6 +71,12 @@ namespace PaymentIntegration.Controllers
         public IActionResult Verify()
         {
             return View();
+        }
+
+        public static int GenerateRef()
+        {
+            Random random = new Random((int)DateTime.Now.Ticks);
+            return random.Next(100000000, 999999999);
         }
     }
 }
