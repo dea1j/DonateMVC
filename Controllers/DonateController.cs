@@ -41,7 +41,7 @@ namespace PaymentIntegration.Controllers
                 Email = donate.Email,
                 Reference = GenerateRef().ToString(),
                 Currency = "NGN",
-                CallbackUrl = "http://localhost:48555/donate/verify"
+                CallbackUrl = "http://localhost:49800"
             };
 
             TransactionInitializeResponse response = PayStack.Transactions.Initialize(request);
@@ -56,7 +56,7 @@ namespace PaymentIntegration.Controllers
                 };
                 await _context.Transactions.AddAsync(transaction);
                 await _context.SaveChangesAsync();
-                Redirect(response.Data.AuthorizationUrl);
+                return Redirect(response.Data.AuthorizationUrl);
             }
             ViewData["error"] = response.Message;
             return View();
@@ -65,6 +65,8 @@ namespace PaymentIntegration.Controllers
         [HttpGet]
         public IActionResult Donations()
         {
+            var transactions = _context.Transactions.Where(x => x.Status == false).ToList();
+            ViewData["transactions"] = transactions;
             return View();
         }
 
