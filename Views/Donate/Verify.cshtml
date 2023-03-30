@@ -1,0 +1,25 @@
+﻿@model TransactionModel
+@{
+    ViewData["Title"] = "Verify";
+    var error = ViewData["error"] as string; 
+}
+
+<div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
+    <div class="card" style="width: 24rem;">
+        <div class="card-body">
+            <h3 class="card-title text-center">Donate</h3>
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <div class="alert alert-danger">@error</div>
+            }
+            <form method="post" asp-controller="Donate" asp-action="Verify">
+                <div class="form-group">
+                    <label asp-for="TrxRef">Trans ref</label>
+                    <input type="text" class="form-control" asp-for="TrxRef" required />
+                </div>
+          
+                <button type="submit" class="btn btn-primary btn-block">Verify</button>
+            </form>
+        </div>
+    </div>
+</div>

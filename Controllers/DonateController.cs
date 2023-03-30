@@ -56,6 +56,9 @@ namespace PaymentIntegration.Controllers
                 };
                 await _context.Transactions.AddAsync(transaction);
                 await _context.SaveChangesAsync();
+
+               
+
                 return Redirect(response.Data.AuthorizationUrl);
             }
             ViewData["error"] = response.Message;
@@ -65,19 +68,24 @@ namespace PaymentIntegration.Controllers
         [HttpGet]
         public IActionResult Donations()
         {
-            var transactions = _context.Transactions.Where(x => x.Status == false).ToList();
+            var transactions = _context.Transactions.Where(x => x.Status == true).ToList();
             ViewData["transactions"] = transactions;
             return View();
         }
 
         [HttpGet]
-        public async Task<IActionResult> Verify(string reference)
+        public IActionResult Verify()
         {
-            TransactionVerifyResponse response = PayStack.Transactions.Verify(reference);
-            if(response.Data.Status == "success")
+            return View();
+        }
+        [HttpPost]
+        public async Task<IActionResult> Verify(TransactionModel transactionModel)
+        {
+            TransactionVerifyResponse response = PayStack.Transactions.Verify(transactionModel.TrxRef);
+            if (response.Data.Status == "success")
             {
-                var transaction = _context.Transactions.Where(x => x.TrxRef == reference).FirstOrDefault();
-                if(transaction != null)
+                var transaction = _context.Transactions.Where(x => x.TrxRef == transactionModel.TrxRef).FirstOrDefault();
+                if (transaction != null)
                 {
                     transaction.Status = true;
                     _context.Transactions.Update(transaction);
